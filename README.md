@@ -13,13 +13,13 @@ Firmware for MKS for Julia 2018 series
 - SD Card
 - Heated Bed
 
-## Marlin_J18_Rpi
+## Marlin_J18_RPI
 
 - Raspberry Pi
 - TouchScreen
 - Heated Bed
 
-## Marlin_J18_Rpi_E
+## Marlin_J18_RPI_E
 
 - Raspberry Pi
 - TouchScreen
