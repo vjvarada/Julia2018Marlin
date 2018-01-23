@@ -49,6 +49,8 @@
   bool ubl_lcd_map_control = false;
 #endif
 
+bool flg = false;
+
 int16_t lcd_preheat_hotend_temp[2], lcd_preheat_bed_temp[2], lcd_preheat_fan_speed[2];
 
 #if ENABLED(FILAMENT_LCD_DISPLAY) && ENABLED(SDSUPPORT)
@@ -879,6 +881,7 @@ void kill_screen(const char* lcd_msg) {
    * "Main" menu
    *
    */
+
 
   void lcd_main_menu() {
     START_MENU();
@@ -2344,6 +2347,132 @@ void kill_screen(const char* lcd_msg) {
 
   /**
    *
+   * Bed Leveling Screens
+   *
+   */
+
+
+   void bedLevelingDone(){
+      lcd_goto_previous_menu();
+      lcd_completion_feedback();
+      defer_return_to_status = false;
+   }
+
+
+    void bedLevelingThirdPositionMessage(){
+      u8g.drawStr(0,12,"Lock back leveling");
+      u8g.drawStr(0,24,"knob and click the");
+      u8g.drawStr(0,36,"dial");
+
+      if (lcd_clicked) {
+        bedLevelingDone();
+      }
+
+    }
+
+   void bedLevelingThirdPosition(){
+      lcd_goto_screen(bedLevelingThirdPositionMessage);
+      enqueue_and_echo_commands_P(PSTR("Z20"));
+      enqueue_and_echo_commands_P(PSTR("G1 X110 Y195"));
+      enqueue_and_echo_commands_P(PSTR("G1 X110 Y195 Z0"));
+   }
+
+
+
+    void bedLevelingSecondPositionMessage(){
+      u8g.drawStr(0,12,"Lock left leveling");
+      u8g.drawStr(0,24,"knob and click the");
+      u8g.drawStr(0,36,"dial");
+
+      if (lcd_clicked) {
+        bedLevelingThirdPosition();
+      }
+
+    }
+
+   void bedLevelingSecondPosition(){
+      lcd_goto_screen(bedLevelingSecondPositionMessage);
+      enqueue_and_echo_commands_P(PSTR("Z20"));
+      enqueue_and_echo_commands_P(PSTR("G1 X35 Y18"));
+      enqueue_and_echo_commands_P(PSTR("G1 X35 Y18 Z0"));
+   }
+
+
+    void bedLevelingFirstPositionMessage(){
+      u8g.drawStr(0,12,"Lock right leveling");
+      u8g.drawStr(0,24,"knob and click the");
+      u8g.drawStr(0,36,"dial");
+
+      if (lcd_clicked) {
+        bedLevelingSecondPosition();
+      }
+
+    }
+
+   void bedLevelingFirstPosition(){
+      lcd_goto_screen(bedLevelingFirstPositionMessage);
+      enqueue_and_echo_commands_P(PSTR("G1 X180 Y18"));
+      enqueue_and_echo_commands_P(PSTR("G1 X180 Y18 Z0"));
+   }
+
+    void bedLevelingUnlockMessage(){
+      u8g.drawStr(0,12,"Unlock all leveling");
+      u8g.drawStr(0,24,"knobs and press the");
+      u8g.drawStr(0,36,"dial");
+
+      if (lcd_clicked) {
+        bedLevelingFirstPosition();
+      }
+
+    }
+
+     /**
+     * Step 4: Display "Click to Begin", wait for click
+     *         Move to the first probe position
+     */
+    void bedLevelUnlockPosition(){
+      lcd_goto_screen(bedLevelingUnlockMessage);
+      enqueue_and_echo_commands_P(PSTR("G1 X100 Y100 Z50"));
+
+    }
+
+    /**
+     * Step 4: Display "Click to Begin", wait for click
+     *         Move to the first probe position
+     */
+    void bedLevelingHomingDone() {
+      if (lcdDrawUpdate) lcd_implementation_drawedit(PSTR(MSG_LEVEL_BED_WAITING));
+      if (lcd_clicked) {
+        bedLevelUnlockPosition();
+      }
+
+    }
+    /**
+     * Step 2: Display "Homing XYZ" - Wait for homing to finish
+     */
+   void bedLevelingHome() {
+      if (lcdDrawUpdate) lcd_implementation_drawedit(PSTR(MSG_LEVEL_BED_HOMING), NULL);
+      lcdDrawUpdate = LCDVIEW_CALL_NO_REDRAW;
+      if (axis_homed[X_AXIS] && axis_homed[Y_AXIS] && axis_homed[Z_AXIS])
+      lcd_goto_screen(bedLevelingHomingDone);
+    }
+
+      /**
+     * Step 1: Start Bed leveling by homing bed
+     */
+
+   void bedLevelingScreen1(){
+
+      defer_return_to_status = true;
+      axis_homed[X_AXIS] = axis_homed[Y_AXIS] = axis_homed[Z_AXIS] = false;
+      lcd_goto_screen(bedLevelingHome);
+      enqueue_and_echo_commands_P(PSTR("G28"));
+
+   }
+
+
+  /**
+   *
    * "Prepare" submenu
    *
    */
@@ -2373,6 +2502,11 @@ void kill_screen(const char* lcd_msg) {
       MENU_ITEM(gcode, MSG_AUTO_HOME_Y, PSTR("G28 Y"));
       MENU_ITEM(gcode, MSG_AUTO_HOME_Z, PSTR("G28 Z"));
     #endif
+
+     // //
+     // //Bed Leveling
+     // //
+     MENU_ITEM(submenu, "Bed Leveling Wizard",bedLevelingScreen1);
 
     //
     // Level Bed

@@ -761,7 +761,7 @@
 #define Z_MIN_POS 0
 #define X_MAX_POS 210
 #define Y_MAX_POS 200
-#define Z_MAX_POS 165
+#define Z_MAX_POS 170
 
 // If enabled, axes won't move below MIN_POS in response to movement commands.
 #define MIN_SOFTWARE_ENDSTOPS
@@ -788,6 +788,7 @@
 //===========================================================================
 // @section bedlevel
 
+#define GLCD_BED_LEVELING
 /**
  * Choose one of the options below to enable G29 Bed Leveling. The parameters
  * and behavior of G29 will change depending on your selection.
@@ -1138,7 +1139,7 @@
  *
  * View the current statistics with M78.
  */
-//#define PRINTCOUNTER
+#define PRINTCOUNTER
 
 //=============================================================================
 //============================= LCD and SD support ============================
