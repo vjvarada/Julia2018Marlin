@@ -2742,7 +2742,7 @@ void kill_screen(const char* lcd_msg) {
 
     void bedLevelingThirdPositionMessage(){
       u8g.drawStr(0,12,"Lock back leveling");
-      u8g.drawStr(0,24,"knob anti-clockwise");
+      u8g.drawStr(0,24,"knob clockwise");
       u8g.drawStr(0,36,"dial");
 
       if (lcd_clicked) {
@@ -2754,15 +2754,15 @@ void kill_screen(const char* lcd_msg) {
    void bedLevelingThirdPosition(){
       lcd_goto_screen(bedLevelingThirdPositionMessage);
       enqueue_and_echo_commands_P(PSTR("G1 Z20"));
-      enqueue_and_echo_commands_P(PSTR("G1 X110 Y195"));
-      enqueue_and_echo_commands_P(PSTR("G1 X110 Y195 Z0"));
+      enqueue_and_echo_commands_P(PSTR("G1 X107 Y197"));
+      enqueue_and_echo_commands_P(PSTR("G1 X107 Y197 Z0"));
    }
 
 
 
     void bedLevelingSecondPositionMessage(){
       u8g.drawStr(0,12,"Lock left leveling");
-      u8g.drawStr(0,24,"knob anti-clockwise");
+      u8g.drawStr(0,24,"knob clockwise");
       u8g.drawStr(0,36,"and click the dial");
 
       if (lcd_clicked) {
@@ -2774,14 +2774,14 @@ void kill_screen(const char* lcd_msg) {
    void bedLevelingSecondPosition(){
       lcd_goto_screen(bedLevelingSecondPositionMessage);
       enqueue_and_echo_commands_P(PSTR("G1 Z20"));
-      enqueue_and_echo_commands_P(PSTR("G1 X35 Y18"));
-      enqueue_and_echo_commands_P(PSTR("G1 X35 Y18 Z0"));
+      enqueue_and_echo_commands_P(PSTR("G1 X34 Y21"));
+      enqueue_and_echo_commands_P(PSTR("G1 X34 Y21 Z0"));
    }
 
 
     void bedLevelingFirstPositionMessage(){
       u8g.drawStr(0,12,"Lock right leveling");
-      u8g.drawStr(0,24,"knob anti-clockwise");
+      u8g.drawStr(0,24,"knob clockwise");
       u8g.drawStr(0,36,"and click the dial");
 
       if (lcd_clicked) {
@@ -2792,14 +2792,14 @@ void kill_screen(const char* lcd_msg) {
 
    void bedLevelingFirstPosition(){
       lcd_goto_screen(bedLevelingFirstPositionMessage);
-      enqueue_and_echo_commands_P(PSTR("G1 X180 Y18"));
-      enqueue_and_echo_commands_P(PSTR("G1 X180 Y18 Z0"));
+      enqueue_and_echo_commands_P(PSTR("G1 X179 Y20"));
+      enqueue_and_echo_commands_P(PSTR("G1 X179 Y21 Z0"));
    }
 
     void bedLevelingUnlockMessage(){
       u8g.drawStr(0,12,"Unlock all leveling");
-      u8g.drawStr(0,24,"knobs clockwise and");
-      u8g.drawStr(0,36,"click the dial");
+      u8g.drawStr(0,24,"knobs anti-clockwise");
+      u8g.drawStr(0,36,"and click the dial");
 
       if (lcd_clicked) {
         bedLevelingFirstPosition();

@@ -736,7 +736,7 @@
 // @section extruderp
 
 // For direct drive extruder v9 set to true, for geared extruder set to false.
-#define INVERT_E0_DIR true
+#define INVERT_E0_DIR false
 #define INVERT_E1_DIR true
 #define INVERT_E2_DIR false
 #define INVERT_E3_DIR false
@@ -761,7 +761,7 @@
 #define Z_MIN_POS 0
 #define X_MAX_POS 210
 #define Y_MAX_POS 200
-#define Z_MAX_POS 170
+#define Z_MAX_POS 210
 
 // If enabled, axes won't move below MIN_POS in response to movement commands.
 #define MIN_SOFTWARE_ENDSTOPS
