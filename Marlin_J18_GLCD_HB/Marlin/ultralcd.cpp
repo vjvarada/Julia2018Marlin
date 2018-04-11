@@ -50,7 +50,7 @@
 #endif
 
 bool flg = false;
-float tempZHomeOffset = 0 ;
+//float tempZHomeOffset = 0 ;
 
 int16_t lcd_preheat_hotend_temp[2], lcd_preheat_bed_temp[2], lcd_preheat_fan_speed[2];
 
@@ -2732,12 +2732,71 @@ void kill_screen(const char* lcd_msg) {
    */
 
 
+  // void _lcd_move_xyz(const char* name, AxisEnum axis) {
+  //   if (lcd_clicked) { return lcd_goto_previous_menu(); }
+  //   ENCODER_DIRECTION_NORMAL();
+  //   if (encoderPosition) {
+  //     refresh_cmd_timeout();
+
+  //     float min = current_position[axis] - 1000,
+  //           max = current_position[axis] + 1000;
+
+
+  //     // Get the new position
+  //     current_position[axis] += float((int32_t)encoderPosition) * move_menu_scale;
+
+
+  //     // Limit only when trying to move towards the limit
+  //     if ((int32_t)encoderPosition < 0) NOLESS(current_position[axis], min);
+  //     if ((int32_t)encoderPosition > 0) NOMORE(current_position[axis], max);
+
+  //     manual_move_to_current(axis);
+
+  //     encoderPosition = 0;
+  //     lcdDrawUpdate = LCDVIEW_REDRAW_NOW;
+  //   }
+  //   if (lcdDrawUpdate) lcd_implementation_drawedit(name, ftostr41sign(current_position[axis]));
+  // }
+
    void bedLevelingDone(){
       lcd_goto_previous_menu();
       lcd_completion_feedback();
       defer_return_to_status = false;
-       home_offset[Z_AXIS] = tempZHomeOffset ;
+      home_offset[Z_AXIS] = -current_position[Z_AXIS] ;
+      settings.save();
+      //save Z offset
    }
+
+
+
+    void setZOffsetMessage(){
+      u8g.drawStr(0,12,"Slide a paper sheet");
+      u8g.drawStr(0,24,"under Nozzle while");
+      u8g.drawStr(0,36,"turning dial, untill");
+      u8g.drawStr(0,48,"paper stops sliding");
+
+      if (lcd_clicked)
+        { return bedLevelingDone(); }
+        ENCODER_DIRECTION_NORMAL();
+      if (encoderPosition) {
+        refresh_cmd_timeout();
+
+        // Get the new position
+        current_position[Z_AXIS] += float((int32_t)encoderPosition) * 0.05;
+
+        manual_move_to_current(Z_AXIS);
+
+        encoderPosition = 0;
+    }
+  }
+
+
+   void setZOffsetMove(){
+      lcd_goto_screen(setZOffsetMessage);
+      enqueue_and_echo_commands_P(PSTR("G28"));
+      enqueue_and_echo_commands_P(PSTR("G1 X100 Y100 Z2"));
+   }
+
 
 
     void bedLevelingThirdPositionMessage(){
@@ -2746,7 +2805,7 @@ void kill_screen(const char* lcd_msg) {
       u8g.drawStr(0,36,"dial");
 
       if (lcd_clicked) {
-        bedLevelingDone();
+        setZOffsetMove();
       }
 
     }
@@ -2845,8 +2904,8 @@ void kill_screen(const char* lcd_msg) {
    void bedLevelingScreen1(){
 
       defer_return_to_status = true;
-      tempZHomeOffset = 0 ;
-      tempZHomeOffset = home_offset[Z_AXIS] ;
+      //tempZHomeOffset = 0 ;
+      //tempZHomeOffset = home_offset[Z_AXIS] ;
       home_offset[Z_AXIS] = 0;
       axis_homed[X_AXIS] = axis_homed[Y_AXIS] = axis_homed[Z_AXIS] = false;
       lcd_goto_screen(bedLevelingHome);
