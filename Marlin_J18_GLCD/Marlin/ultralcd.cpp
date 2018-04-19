@@ -2793,7 +2793,7 @@ void kill_screen(const char* lcd_msg) {
 
    void setZOffsetMove(){
       lcd_goto_screen(setZOffsetMessage);
-      enqueue_and_echo_commands_P(PSTR("G28"));
+      enqueue_and_echo_commands_P(PSTR("G1 Z20"));
       enqueue_and_echo_commands_P(PSTR("G1 X100 Y100 Z2"));
    }
 
@@ -2813,8 +2813,8 @@ void kill_screen(const char* lcd_msg) {
    void bedLevelingThirdPosition(){
       lcd_goto_screen(bedLevelingThirdPositionMessage);
       enqueue_and_echo_commands_P(PSTR("G1 Z20"));
-      enqueue_and_echo_commands_P(PSTR("G1 X107 Y197"));
-      enqueue_and_echo_commands_P(PSTR("G1 X107 Y197 Z0"));
+      enqueue_and_echo_commands_P(PSTR("G1 X110 Y197"));
+      enqueue_and_echo_commands_P(PSTR("G1 X110 Y197 Z0"));
    }
 
 
@@ -2833,8 +2833,8 @@ void kill_screen(const char* lcd_msg) {
    void bedLevelingSecondPosition(){
       lcd_goto_screen(bedLevelingSecondPositionMessage);
       enqueue_and_echo_commands_P(PSTR("G1 Z20"));
-      enqueue_and_echo_commands_P(PSTR("G1 X34 Y21"));
-      enqueue_and_echo_commands_P(PSTR("G1 X34 Y21 Z0"));
+      enqueue_and_echo_commands_P(PSTR("G1 X35.6 Y21"));
+      enqueue_and_echo_commands_P(PSTR("G1 X35.6 Y21 Z0"));
    }
 
 
@@ -2851,8 +2851,8 @@ void kill_screen(const char* lcd_msg) {
 
    void bedLevelingFirstPosition(){
       lcd_goto_screen(bedLevelingFirstPositionMessage);
-      enqueue_and_echo_commands_P(PSTR("G1 X179 Y20"));
-      enqueue_and_echo_commands_P(PSTR("G1 X179 Y21 Z0"));
+      enqueue_and_echo_commands_P(PSTR("G1 X181 Y21"));
+      enqueue_and_echo_commands_P(PSTR("G1 X181 Y21 Z0"));
    }
 
     void bedLevelingUnlockMessage(){
