@@ -2814,7 +2814,7 @@ void kill_screen(const char* lcd_msg) {
       lcd_goto_screen(bedLevelingThirdPositionMessage);
       enqueue_and_echo_commands_P(PSTR("G1 Z20"));
       enqueue_and_echo_commands_P(PSTR("G1 X110 Y197"));
-      enqueue_and_echo_commands_P(PSTR("G1 X110 Y197 Z0"));
+      enqueue_and_echo_commands_P(PSTR("G1 X110 Y197 Z0.05"));
    }
 
 
@@ -2834,7 +2834,7 @@ void kill_screen(const char* lcd_msg) {
       lcd_goto_screen(bedLevelingSecondPositionMessage);
       enqueue_and_echo_commands_P(PSTR("G1 Z20"));
       enqueue_and_echo_commands_P(PSTR("G1 X35.6 Y21"));
-      enqueue_and_echo_commands_P(PSTR("G1 X35.6 Y21 Z0"));
+      enqueue_and_echo_commands_P(PSTR("G1 X35.6 Y21 Z0.05"));
    }
 
 
