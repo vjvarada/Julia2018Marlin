@@ -2793,7 +2793,7 @@ void kill_screen(const char* lcd_msg) {
 
    void setZOffsetMove(){
       lcd_goto_screen(setZOffsetMessage);
-      enqueue_and_echo_commands_P(PSTR("G28"));
+      enqueue_and_echo_commands_P(PSTR("G1 Z20"));
       enqueue_and_echo_commands_P(PSTR("G1 X100 Y100 Z2"));
    }
 
