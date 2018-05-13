@@ -511,6 +511,13 @@ void CardReader::getStatus() {
   }
 }
 
+//--------Created function for Julia 2018 Power Panic
+
+uint32_t CardReader::get_sdpos()
+{
+return sdpos;
+}
+//-----------------------------------
 void CardReader::write_command(char *buf) {
   char* begin = buf;
   char* npos = 0;

@@ -53,6 +53,7 @@ public:
   void startFileprint();
   void stopSDPrint();
   void getStatus();
+  uint32_t get_sdpos();   //Functoin created for Julia 2018 Power Panic
   void printingHasFinished();
 
   #if ENABLED(LONG_FILENAME_HOST_SUPPORT)
