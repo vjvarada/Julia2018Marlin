@@ -877,6 +877,77 @@ void kill_screen(const char* lcd_msg) {
 
   #endif
 
+  static void stopnsave(){
+    char cmd[30];
+    char* c;
+    card.pauseSDPrint(); //Pauses the print by setting sdprinting = false
+    uint32_t pos = card.get_sdpos(); //gets sd pos, the current position in SD card
+    card.closefile(); //also sets saving = false
+
+    card.openFile("RESR.GCO",false);  //open a file to write, also sets saving = true
+
+    sprintf_P(cmd, PSTR("M117 Restarting %s"), card.filename);
+    card.write_command(cmd);
+
+    sprintf_P(cmd, PSTR("G28"));
+    card.write_command(cmd);
+
+    sprintf_P(cmd, PSTR("G90"));
+    card.write_command(cmd);
+
+    sprintf_P(cmd, PSTR("M190 S%s"), ftostr31ns(thermalManager.degTargetBed()));
+    card.write_command(cmd);
+
+    sprintf_P(cmd, PSTR("M109 S%s"), ftostr31ns(thermalManager.degTargetHotend(0)));
+    card.write_command(cmd);
+
+    sprintf_P(cmd, PSTR("G1 Z%s"), ftostr33((current_position[Z_AXIS] + 5)));
+    card.write_command(cmd);
+
+    card.write_command("G92 E0");
+
+    card.write_command("G1 F200 E5");
+    card.write_command("G92 F200 E5");
+    sprintf_P(cmd, PSTR("G92 E%s"), ftostr53(current_position[E_AXIS]));
+    card.write_command(cmd);
+
+    //Wipe??
+
+    sprintf_P(cmd, PSTR("G1 F1200 X%s"), ftostr33(current_position[X_AXIS]));
+    card.write_command(cmd);
+
+    sprintf_P(cmd, PSTR("G1 Y%s"), ftostr33(current_position[Y_AXIS]));
+    card.write_command(cmd);
+
+    sprintf_P(cmd, PSTR("G1 Z%s"), ftostr33(current_position[Z_AXIS]));
+    card.write_command(cmd);
+
+    sprintf_P(cmd, PSTR("M23 %s"), card.filename);  //opens a file for reading from the SD card
+    for(c = &cmd[4]; *c; c++)
+        *c = tolower(*c);
+    card.write_command(cmd);
+
+    sprintf_P(cmd, PSTR("M26 S%lu"), pos);
+    card.write_command(cmd);
+
+    sprintf_P(cmd, PSTR("M24"));
+    card.write_command(cmd);
+    card.closefile(); //sets saving = false and closes the file.
+      stepper.synchronize();
+      clear_command_queue();
+      quickstop_stepper();
+      print_job_timer.stop();
+      thermalManager.disable_all_heaters();
+      #if FAN_COUNT > 0
+        for (uint8_t i = 0; i < FAN_COUNT; i++) fanSpeeds[i] = 0;
+      #endif
+      wait_for_heatup = false;
+      lcd_setstatusPGM(PSTR("PROGRESS SAVED"), -1);
+      card.stopSDPrint();
+      enqueue_and_echo_commands_P(PSTR("G28"));
+    lcd_return_to_status();
+  }
+
   /**
    *
    * "Main" menu
@@ -929,6 +1000,7 @@ void kill_screen(const char* lcd_msg) {
           else
             MENU_ITEM(function, MSG_RESUME_PRINT, lcd_sdcard_resume);
           MENU_ITEM(function, MSG_STOP_PRINT, lcd_sdcard_stop);
+          MENU_ITEM(function,"Save Progress", stopnsave);
         }
         else {
           MENU_ITEM(submenu, MSG_CARD_MENU, lcd_sdcard_menu);
