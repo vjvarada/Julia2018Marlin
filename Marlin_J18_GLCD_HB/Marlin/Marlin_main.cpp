@@ -12906,8 +12906,11 @@ void stop() {
   }
 
   ISR(PCINT2_vect) {
-    if (digitalRead(63) == LOW)
-    SERIAL_ECHOLNPGM("Power Outage Detected!!");
+    if (digitalRead(63) == LOW) //make sure pin in LOW
+    {
+      SERIAL_ECHOLNPGM("Power Outage Detected!!");
+    }
+
   }
 #endif
 
