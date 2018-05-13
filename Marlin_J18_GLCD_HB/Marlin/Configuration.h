@@ -217,6 +217,14 @@
 
 // @section temperature
 
+
+
+//power Failure protection
+ #define POWERPANIC
+#if ENABLED(POWERPANIC)
+  #define PP_INT_PIN 63 //Also A9 on AUX2
+#endif
+
 //===========================================================================
 //============================= Thermal Settings ============================
 //===========================================================================

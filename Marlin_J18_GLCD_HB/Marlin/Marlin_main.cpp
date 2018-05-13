@@ -12891,6 +12891,26 @@ void stop() {
   }
 }
 
+#if ENABLED(POWERPANIC)
+  void pciSetup(byte pin) //Initialising pin change interrupt
+  {
+    *digitalPinToPCMSK(pin) |= bit (digitalPinToPCMSKbit(pin)); // enable pin
+    PCIFR |= bit (digitalPinToPCICRbit(pin)); // clear any outstanding interrupt
+    PCICR |= bit (digitalPinToPCICRbit(pin)); // enable interrupt for the group
+  }
+
+  void setup_PowerPanic(){
+    pinMode(PP_INT_PIN, INPUT);
+    digitalWrite(PP_INT_PIN, HIGH);
+    pciSetup(PP_INT_PIN);
+  }
+
+  ISR(PCINT2_vect) {
+    if (digitalRead(63) == LOW)
+    SERIAL_ECHOLNPGM("Power Outage Detected!!");
+  }
+#endif
+
 /**
  * Marlin entry-point: Set up before the program loop
  *  - Set up the kill pin, filament runout, power hold
@@ -12910,6 +12930,7 @@ void stop() {
  *    • status LEDs
  */
 void setup() {
+
 
   #ifdef DISABLE_JTAG
     // Disable JTAG on AT90USB chips to free up pins for IO
@@ -13113,6 +13134,10 @@ void setup() {
 
   #if ENABLED(SWITCHING_NOZZLE)
     move_nozzle_servo(0);  // Initialize nozzle servo
+  #endif
+
+  #if ENABLED(POWERPANIC)
+      setup_PowerPanic();
   #endif
 }
 
