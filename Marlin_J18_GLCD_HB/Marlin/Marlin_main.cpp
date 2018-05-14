@@ -12910,16 +12910,16 @@ ISR(PCINT2_vect) {
   {
     if (card.sdprinting)
     {
-        int bedTarget = thermalManager.degTargetBed();
-        int hotendTarget = thermalManager.degTargetHotend(0);
-        thermalManager.disable_all_heaters();
-        clear_command_queue();
-        quickstop_stepper();
-        print_job_timer.stop();
-        #if FAN_COUNT > 0
-          for (uint8_t i = 0; i < FAN_COUNT; i++) fanSpeeds[i] = 0;
-        #endif
-        wait_for_heatup = false;
+      int bedTarget = thermalManager.degTargetBed();
+      int hotendTarget = thermalManager.degTargetHotend(0);
+      thermalManager.disable_all_heaters();
+      clear_command_queue();
+      quickstop_stepper();
+      print_job_timer.stop();
+      #if FAN_COUNT > 0
+        for (uint8_t i = 0; i < FAN_COUNT; i++) fanSpeeds[i] = 0;
+      #endif
+      wait_for_heatup = false;
       char cmd[30];
       char* c;
       card.pauseSDPrint(); //Pauses the print by setting sdprinting = false
@@ -12946,14 +12946,16 @@ ISR(PCINT2_vect) {
       sprintf_P(cmd, PSTR("G1 Z%s"), ftostr33((current_position[Z_AXIS] + 5)));
       card.write_command(cmd);
 
-      card.write_command("G92 E0");
-
-      card.write_command("G1 F200 E5");
-      card.write_command("G92 E0");
-      sprintf_P(cmd, PSTR("G92 E%s"), ftostr53(current_position[E_AXIS]));
+      sprintf_P(cmd, PSTR("G92 E0"));
       card.write_command(cmd);
 
-      //Wipe??
+      sprintf_P(cmd, PSTR("G92 F200 E5"));
+      card.write_command(cmd);
+
+      sprintf_P(cmd, PSTR("G92 E0"));
+      card.write_command(cmd);
+      sprintf_P(cmd, PSTR("G92 E%s"), ftostr53(current_position[E_AXIS]));
+      card.write_command(cmd);
 
       sprintf_P(cmd, PSTR("G1 F1200 X%s"), ftostr33(current_position[X_AXIS]));
       card.write_command(cmd);
@@ -12978,7 +12980,6 @@ ISR(PCINT2_vect) {
 
         SERIAL_ECHOLNPGM("File Saved!!");
         card.stopSDPrint();
-        enqueue_and_echo_commands_P(PSTR("G28 Z0"));
     }
 
   }
