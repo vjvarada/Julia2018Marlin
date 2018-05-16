@@ -13000,9 +13000,6 @@ ISR(PCINT2_vect) {
 
 }
 
-bool checkResrFileAvailable(){
-
-}
 
 #endif
 
