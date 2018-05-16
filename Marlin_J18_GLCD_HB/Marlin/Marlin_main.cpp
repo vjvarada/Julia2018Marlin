@@ -12936,7 +12936,7 @@ ISR(PCINT2_vect) {
 
       card.openFile("RESR.GCO",false);  //open a file to write, also sets saving = true
 
-      sprintf_P(cmd, PSTR("M117 Restarting %s"), card.longFilename); //check if it works
+      sprintf_P(cmd, PSTR("M117 Restarting %s"), card.longFilename); //TODO: check if it works
       card.write_command(cmd);
 
       sprintf_P(cmd, PSTR("M109 S150")); //heats nozzle a little so that print doesnt not come off while homing
@@ -12978,16 +12978,18 @@ ISR(PCINT2_vect) {
       sprintf_P(cmd, PSTR("G1 Z%s"), ftostr33(current_position[Z_AXIS]));
       card.write_command(cmd);
 
-      sprintf_P(cmd, PSTR("M23 %s"), card.longFilename);  //opens a file for reading from the SD card
+      sprintf_P(cmd, PSTR("M23 %s"), card.longFilename);  //TODO: opens a file for reading from the SD card, check if this works
       for(c = &cmd[4]; *c; c++)
           *c = tolower(*c);
       card.write_command(cmd);
 
-      sprintf_P(cmd, PSTR("M26 S%lu"), pos-16); // check if it works
+      sprintf_P(cmd, PSTR("M26 S%lu"), pos-16); // //TODO: check if it works, and goes back to the position where it stoped without missing lines
       card.write_command(cmd);
 
       sprintf_P(cmd, PSTR("M24"));
+
       card.write_command(cmd);
+      //TODO: gcode to delete itself
       card.closefile(); //sets saving = false and closes the file.
       card.stopSDPrint();
       enqueue_and_echo_commands_P(PSTR("G28 Z0"));
@@ -12997,6 +12999,11 @@ ISR(PCINT2_vect) {
   }
 
 }
+
+bool checkResrFileAvailable(){
+
+}
+
 #endif
 
 /**
@@ -13226,7 +13233,12 @@ void setup() {
 
   #if ENABLED(POWERPANIC)
       setup_PowerPanic();
+      // if (SdFile.open("", "RESR.GCO", O_READ))
+      // //File Exists, Show Print Resurection Menu
+      //   lcd_restore_progress_menu_function();
   #endif
+
+
 }
 
 /**

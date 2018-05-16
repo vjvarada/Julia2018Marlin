@@ -125,6 +125,7 @@ uint16_t max_display_update_time = 0;
   void lcd_control_temperature_preheat_material2_settings_menu();
   void lcd_control_motion_menu();
   void lcd_control_filament_menu();
+  void lcd_restore_progress_menu();
 
   #if ENABLED(LCD_INFO_MENU)
     #if ENABLED(PRINTCOUNTER)
@@ -876,8 +877,36 @@ void kill_screen(const char* lcd_msg) {
     }
 
   #endif
+void restoreProgress(){
+  null;
+  //starts printing from RESR.GCO file
+}
+void deleteProgress(){
+  null;
+  //Deletes RESR.GCO file
+}
+void lcd_restore_progress_menu_function() { lcd_goto_screen(lcd_restore_progress_menu);} //function that gets called from main
 
-  static void stopnsave(){
+  /**
+   *
+   * "Restore Progress" submenu
+   *
+   */
+  void lcd_restore_progress_menu() {
+    START_MENU();
+
+    //
+    // ^ Main
+    //
+    MENU_BACK(MSG_MAIN);
+    MENU_ITEM(function,"Restore Progress", restoreProgress);
+    MENU_ITEM(function,"Delete Progress", deleteProgress);
+
+    END_MENU();
+  }
+
+  void stopnsave(){
+    //Lets all moves finish then saves, ass opposed to shutting everuthing down abruptly like powerpanic
     char cmd[30];
     char* c;
     card.pauseSDPrint(); //Pauses the print by setting sdprinting = false
@@ -886,7 +915,7 @@ void kill_screen(const char* lcd_msg) {
 
     card.openFile("RESR.GCO",false);  //open a file to write, also sets saving = true
 
-    sprintf_P(cmd, PSTR("M117 Restarting %s"), card.longFilename);
+    sprintf_P(cmd, PSTR("M117 Restarting %s"), card.longFilename); //TODO: Check if this works
     card.write_command(cmd);
 
     sprintf_P(cmd, PSTR("G28"));
@@ -930,11 +959,12 @@ void kill_screen(const char* lcd_msg) {
         *c = tolower(*c);
     card.write_command(cmd);
 
-    sprintf_P(cmd, PSTR("M26 S%lu"), pos-16); //check if it works
+    sprintf_P(cmd, PSTR("M26 S%lu"), pos-16); //TODO: check if it works, and goes back to the position where it stoped without missing lines
     card.write_command(cmd);
 
     sprintf_P(cmd, PSTR("M24"));
     card.write_command(cmd);
+    //TODO: Gcode to delete itself
     card.closefile(); //sets saving = false and closes the file.
     stepper.synchronize();
     clear_command_queue();
