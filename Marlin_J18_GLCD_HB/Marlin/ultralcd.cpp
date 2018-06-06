@@ -51,7 +51,7 @@
 
 bool flg = false;
 //float tempZHomeOffset = 0 ;
-
+bool lcd_return =true;
 int16_t lcd_preheat_hotend_temp[2], lcd_preheat_bed_temp[2], lcd_preheat_fan_speed[2];
 
 #if ENABLED(FILAMENT_LCD_DISPLAY) && ENABLED(SDSUPPORT)
@@ -447,6 +447,7 @@ uint16_t max_display_update_time = 0;
    * General function to go directly to a screen
    */
   void lcd_goto_screen(screenFunc_t screen, const uint32_t encoder = 0) {
+    SERIAL_ECHOPGM("lcd_goto_screen");
     if (currentScreen != screen) {
 
       #if ENABLED(DOUBLECLICK_FOR_Z_BABYSTEPPING) && ENABLED(BABYSTEPPING)
@@ -456,6 +457,7 @@ uint16_t max_display_update_time = 0;
         if (screen == lcd_main_menu) {
           if (currentScreen == lcd_status_screen)
             doubleclick_expire_ms = millis() + DOUBLECLICK_MAX_INTERVAL;
+          
         }
         else if (screen == lcd_status_screen && currentScreen == lcd_main_menu && PENDING(millis(), doubleclick_expire_ms))
           screen =
@@ -464,6 +466,7 @@ uint16_t max_display_update_time = 0;
             #else
               lcd_babystep_z
             #endif
+
           ;
       #endif
 
@@ -504,6 +507,7 @@ uint16_t max_display_update_time = 0;
   // done. ** This blocks the command queue! **
   //
   void _lcd_synchronize() {
+    SERIAL_ECHOPGM("_lcd_synchronize");
     static bool no_reentry = false;
     if (lcdDrawUpdate) lcd_implementation_drawmenu_static(LCD_HEIGHT >= 4 ? 1 : 0, sync_message);
     if (no_reentry) return;
@@ -512,21 +516,29 @@ uint16_t max_display_update_time = 0;
     no_reentry = true;
     screenFunc_t old_screen = currentScreen;
     lcd_goto_screen(_lcd_synchronize);
+    SERIAL_ECHOPGM("_lcd_synchronize");
     stepper.synchronize();
     no_reentry = false;
     lcd_goto_screen(old_screen);
+    SERIAL_ECHOPGM("_lcd_synchronize1");
   }
 
   // Display the synchronize screen with a custom message
   // ** This blocks the command queue! **
   void lcd_synchronize(const char * const msg=NULL) {
     sync_message = msg ? msg : moving;
+    SERIAL_ECHOPGM("lcd_synchronize");
     _lcd_synchronize();
   }
 
-  void lcd_return_to_status() { lcd_goto_screen(lcd_status_screen); }
-
+  void lcd_return_to_status() {   //power panic
+    if(lcd_return)
+    {
+      lcd_goto_screen(lcd_status_screen); 
+      SERIAL_ECHOPGM("lcd_return_to_status");}
+   } 
   void lcd_save_previous_screen() {
+    SERIAL_ECHOPGM("lcd_save_previous_screen");
     if (screen_history_depth < COUNT(screen_history)) {
       screen_history[screen_history_depth].menu_function = currentScreen;
       screen_history[screen_history_depth].encoder_position = encoderPosition;
@@ -535,6 +547,7 @@ uint16_t max_display_update_time = 0;
   }
 
   void lcd_goto_previous_menu() {
+    
     if (screen_history_depth > 0) {
       --screen_history_depth;
       lcd_goto_screen(
@@ -543,7 +556,8 @@ uint16_t max_display_update_time = 0;
       );
     }
     else
-      lcd_return_to_status();
+      {lcd_return_to_status();
+        SERIAL_ECHOPGM("lcd_goto_previous_menu");}
   }
 
 #endif // ULTIPANEL
@@ -556,27 +570,37 @@ uint16_t max_display_update_time = 0;
  */
 
 void lcd_status_screen() {
-
+  SERIAL_ECHOPGM("lcd_status_screen");
   #if ENABLED(ULTIPANEL)
     ENCODER_DIRECTION_NORMAL();
     ENCODER_RATE_MULTIPLY(false);
+    
   #endif
 
   #if ENABLED(LCD_PROGRESS_BAR)
     millis_t ms = millis();
+    
     #if DISABLED(PROGRESS_MSG_ONCE)
+    
       if (ELAPSED(ms, progress_bar_ms + PROGRESS_BAR_MSG_TIME + PROGRESS_BAR_BAR_TIME)) {
         progress_bar_ms = ms;
+        
       }
     #endif
     #if PROGRESS_MSG_EXPIRE > 0
       // Handle message expire
+      
       if (expire_status_ms > 0) {
+        
         #if ENABLED(SDSUPPORT)
+        
           if (card.isFileOpen()) {
+            
             // Expire the message when printing is active
             if (IS_SD_PRINTING) {
+              
               if (ELAPSED(ms, expire_status_ms)) {
+                
                 lcd_status_message[0] = '\0';
                 expire_status_ms = 0;
               }
@@ -586,10 +610,12 @@ void lcd_status_screen() {
             }
           }
           else {
+            
             expire_status_ms = 0;
           }
         #else
           expire_status_ms = 0;
+          
         #endif // SDSUPPORT
       }
     #endif
@@ -598,8 +624,10 @@ void lcd_status_screen() {
   #if ENABLED(ULTIPANEL)
 
     if (lcd_clicked) {
+      
       #if ENABLED(FILAMENT_LCD_DISPLAY) && ENABLED(SDSUPPORT)
-        previous_lcd_status_ms = millis();  // get status message to show up for a while
+        previous_lcd_status_ms = millis(); 
+         // get status message to show up for a while
       #endif
       lcd_implementation_init( // to maybe revive the LCD if static electricity killed it.
         #if ENABLED(LCD_PROGRESS_BAR)
@@ -607,47 +635,57 @@ void lcd_status_screen() {
         #endif
       );
       lcd_goto_screen(lcd_main_menu);
+      
       return;
     }
 
     #if ENABLED(ULTIPANEL_FEEDMULTIPLY)
       const int16_t new_frm = feedrate_percentage + (int32_t)encoderPosition;
       // Dead zone at 100% feedrate
+      
       if ((feedrate_percentage < 100 && new_frm > 100) || (feedrate_percentage > 100 && new_frm < 100)) {
         feedrate_percentage = 100;
         encoderPosition = 0;
+       
       }
       else if (feedrate_percentage == 100) {
+        
         if ((int32_t)encoderPosition > ENCODER_FEEDRATE_DEADZONE) {
           feedrate_percentage += (int32_t)encoderPosition - (ENCODER_FEEDRATE_DEADZONE);
           encoderPosition = 0;
+          
         }
         else if ((int32_t)encoderPosition < -(ENCODER_FEEDRATE_DEADZONE)) {
           feedrate_percentage += (int32_t)encoderPosition + ENCODER_FEEDRATE_DEADZONE;
           encoderPosition = 0;
+          
         }
       }
       else {
+        
         feedrate_percentage = new_frm;
         encoderPosition = 0;
       }
     #endif // ULTIPANEL_FEEDMULTIPLY
 
     feedrate_percentage = constrain(feedrate_percentage, 10, 999);
-
+    
   #endif // ULTIPANEL
 
   lcd_implementation_status_screen();
+  
 }
 
-void lcd_reset_status() { lcd_setstatusPGM(PSTR(""), -1); }
+void lcd_reset_status() { SERIAL_ECHOPGM("lcd_reset_status");
+  lcd_setstatusPGM(PSTR(""), -1);
+ }
 
 /**
  *
  * draw the kill screen
  *
  */
-void kill_screen(const char* lcd_msg) {
+void kill_screen(const char* lcd_msg) {SERIAL_ECHOPGM("kill_screen");
   lcd_init();
   lcd_setalertstatusPGM(lcd_msg);
   #if ENABLED(DOGLCD)
@@ -668,6 +706,7 @@ void kill_screen(const char* lcd_msg) {
    *
    */
   void lcd_buzz(long duration, uint16_t freq) {
+    SERIAL_ECHOPGM("lcd_buzz");
     #if ENABLED(LCD_USE_I2C_BUZZER)
       lcd.buzz(duration, freq);
     #elif PIN_EXISTS(BEEPER)
@@ -678,6 +717,7 @@ void kill_screen(const char* lcd_msg) {
   }
 
   void lcd_quick_feedback() {
+    SERIAL_ECHOPGM("lcd_quick_feedback");
     lcdDrawUpdate = LCDVIEW_CLEAR_CALL_REDRAW;
     buttons = 0;
     next_button_update_ms = millis() + 500;
@@ -692,6 +732,7 @@ void kill_screen(const char* lcd_msg) {
   }
 
   void lcd_completion_feedback(const bool good/*=true*/) {
+SERIAL_ECHOPGM("lcd_completion_feedback");
     if (good) {
       lcd_buzz(100, 659);
       lcd_buzz(100, 698);
@@ -711,6 +752,7 @@ void kill_screen(const char* lcd_msg) {
   #if ENABLED(SDSUPPORT)
 
     void lcd_sdcard_pause() {
+      SERIAL_ECHOPGM("lcd_sdcard_pause");
       card.pauseSDPrint();
       print_job_timer.pause();
       #if ENABLED(PARK_HEAD_ON_PAUSE)
@@ -720,6 +762,7 @@ void kill_screen(const char* lcd_msg) {
     }
 
     void lcd_sdcard_resume() {
+      SERIAL_ECHOPGM("lcd_sdcard_resume");
       #if ENABLED(PARK_HEAD_ON_PAUSE)
         enqueue_and_echo_commands_P(PSTR("M24"));
       #else
@@ -730,6 +773,7 @@ void kill_screen(const char* lcd_msg) {
     }
 
     void lcd_sdcard_stop() {
+      SERIAL_ECHOPGM("lcd_sdcard_stop");
       card.stopSDPrint();
       clear_command_queue();
       quickstop_stepper();
@@ -741,6 +785,7 @@ void kill_screen(const char* lcd_msg) {
       wait_for_heatup = false;
       lcd_setstatusPGM(PSTR(MSG_PRINT_ABORTED), -1);
       lcd_return_to_status();
+      SERIAL_ECHOPGM("lcd_sdcard_stop");
     }
 
   #endif // SDSUPPORT
@@ -752,6 +797,7 @@ void kill_screen(const char* lcd_msg) {
     extern void update_case_light();
 
     void case_light_menu() {
+      SERIAL_ECHOPGM("case_light_menu");
       START_MENU();
       //
       // ^ Main
@@ -805,6 +851,7 @@ void kill_screen(const char* lcd_msg) {
 
     void _progress_bar_test() {
       lcd_goto_screen(progress_bar_test);
+      SERIAL_ECHOPGM("progress_bar_test");
       lcd_set_custom_characters();
     }
 
@@ -836,6 +883,7 @@ void kill_screen(const char* lcd_msg) {
 
     void _lcd_user_gcode(const char * const cmd) {
       lcd_return_to_status();
+      SERIAL_ECHOPGM("_lcd_user_gcode");
       enqueue_and_echo_commands_P(cmd);
     }
 
@@ -856,6 +904,7 @@ void kill_screen(const char* lcd_msg) {
     #endif
 
     void _lcd_user_menu() {
+      SERIAL_ECHOPGM("_lcd_user_menu");
       START_MENU();
       MENU_BACK(MSG_MAIN);
       #if defined(USER_DESC_1) && defined(USER_GCODE_1)
@@ -868,7 +917,7 @@ void kill_screen(const char* lcd_msg) {
         MENU_ITEM(function, USER_DESC_3, lcd_user_gcode_3);
       #endif
       #if defined(USER_DESC_4) && defined(USER_GCODE_4)
-        MENU_ITEM(function, USER_DESC_4, lcd_user_gcode_4);
+        MENU_\][;l,ITEM(function, USER_DESC_4, lcd_user_gcode_4);
       #endif
       #if defined(USER_DESC_5) && defined(USER_GCODE_5)
         MENU_ITEM(function, USER_DESC_5, lcd_user_gcode_5);
@@ -878,14 +927,21 @@ void kill_screen(const char* lcd_msg) {
 
   #endif
 void restoreProgress(){
-  null;
+  card.openAndPrintFile("RESR.GCO");
+  lcd_return=true;
+  lcd_goto_screen(lcd_status_screen);
   //starts printing from RESR.GCO file
 }
 void deleteProgress(){
-  null;
+  card.removeFile("RESR.GCO");
+  lcd_return=true;
+  lcd_main_menu();
   //Deletes RESR.GCO file
 }
-void lcd_restore_progress_menu_function() { lcd_goto_screen(lcd_restore_progress_menu);} //function that gets called from main
+void lcd_restore_progress_menu_function() { //power panic  
+lcd_return=false;
+lcd_goto_screen(lcd_restore_progress_menu);
+SERIAL_ECHOPGM("lcd_restore_progress_menu");} //function that gets called from main
 
   /**
    *
@@ -893,6 +949,7 @@ void lcd_restore_progress_menu_function() { lcd_goto_screen(lcd_restore_progress
    *
    */
   void lcd_restore_progress_menu() {
+    //lcd_reset_status(0);
     START_MENU();
 
     //
@@ -979,6 +1036,8 @@ void lcd_restore_progress_menu_function() { lcd_goto_screen(lcd_restore_progress
     card.stopSDPrint();
     enqueue_and_echo_commands_P(PSTR("G28"));
     lcd_return_to_status();
+    SERIAL_ECHOPGM("");
+    SERIAL_ECHOPGM("stopnsave");
   }
 
   /**
@@ -989,6 +1048,7 @@ void lcd_restore_progress_menu_function() { lcd_goto_screen(lcd_restore_progress
 
 
   void lcd_main_menu() {
+    SERIAL_ECHOPGM("lcd_main_menu");
     START_MENU();
     MENU_BACK(MSG_WATCH);
 
@@ -1071,6 +1131,7 @@ void lcd_restore_progress_menu_function() { lcd_goto_screen(lcd_restore_progress
       // M428 Command
       enqueue_and_echo_commands_P(PSTR("M428"));
       lcd_return_to_status();
+      SERIAL_ECHOPGM("lcd_Set_home");
     }
   #endif
 
@@ -1093,8 +1154,8 @@ void lcd_restore_progress_menu_function() { lcd_goto_screen(lcd_restore_progress
     #if ENABLED(BABYSTEP_XY)
       void _lcd_babystep_x() { _lcd_babystep(X_AXIS, PSTR(MSG_BABYSTEPPING_X)); }
       void _lcd_babystep_y() { _lcd_babystep(Y_AXIS, PSTR(MSG_BABYSTEPPING_Y)); }
-      void lcd_babystep_x() { lcd_goto_screen(_lcd_babystep_x); babysteps_done = 0; defer_return_to_status = true; }
-      void lcd_babystep_y() { lcd_goto_screen(_lcd_babystep_y); babysteps_done = 0; defer_return_to_status = true; }
+      void lcd_babystep_x() { lcd_goto_screen(_lcd_babystep_x); babysteps_done = 0; defer_return_to_status = true; SERIAL_ECHOPGM("lcd_babystep_x");}
+      void lcd_babystep_y() { lcd_goto_screen(_lcd_babystep_y); babysteps_done = 0; defer_return_to_status = true; SERIAL_ECHOPGM("lcd_babystep_y");}
     #endif
 
     #if ENABLED(BABYSTEP_ZPROBE_OFFSET)
@@ -1125,7 +1186,7 @@ void lcd_restore_progress_menu_function() { lcd_goto_screen(lcd_restore_progress
     #else // !BABYSTEP_ZPROBE_OFFSET
 
       void _lcd_babystep_z() { _lcd_babystep(Z_AXIS, PSTR(MSG_BABYSTEPPING_Z)); }
-      void lcd_babystep_z() { lcd_goto_screen(_lcd_babystep_z); babysteps_done = 0; defer_return_to_status = true; }
+      void lcd_babystep_z() { lcd_goto_screen(_lcd_babystep_z); babysteps_done = 0; defer_return_to_status = true; SERIAL_ECHOPGM("lcd_babystep_z");}
 
     #endif // !BABYSTEP_ZPROBE_OFFSET
 
@@ -1162,6 +1223,7 @@ void lcd_restore_progress_menu_function() { lcd_goto_screen(lcd_restore_progress
 
     float lcd_mesh_edit() {
       lcd_goto_screen(_lcd_mesh_edit_NOP);
+      SERIAL_ECHOPGM("lcd_mesh_edit_NOP");
       lcdDrawUpdate = LCDVIEW_CALL_REDRAW_NEXT;
       _lcd_mesh_fine_tune(PSTR("Mesh Editor"));
       return mesh_edit_value;
@@ -1170,6 +1232,7 @@ void lcd_restore_progress_menu_function() { lcd_goto_screen(lcd_restore_progress
     void lcd_mesh_edit_setup(float initial) {
       mesh_edit_value = mesh_edit_accumulator = initial;
       lcd_goto_screen(_lcd_mesh_edit_NOP);
+      SERIAL_ECHOPGM("lcd_mesh_edit_setup");
     }
 
     void _lcd_z_offset_edit() {
@@ -1178,12 +1241,14 @@ void lcd_restore_progress_menu_function() { lcd_goto_screen(lcd_restore_progress
 
     float lcd_z_offset_edit() {
       lcd_goto_screen(_lcd_z_offset_edit);
+      SERIAL_ECHOPGM("lcd_z_offse_edit");
       return mesh_edit_value;
     }
 
     void lcd_z_offset_edit_setup(float initial) {
       mesh_edit_value = mesh_edit_accumulator = initial;
       lcd_goto_screen(_lcd_z_offset_edit);
+      SERIAL_ECHOPGM("lcd_z_offset_edit_setup");
     }
 
   #endif // AUTO_BED_LEVELING_UBL
@@ -1228,6 +1293,7 @@ void lcd_restore_progress_menu_function() { lcd_goto_screen(lcd_restore_progress
             thermalManager.degTargetHotend(active_extruder) < thermalManager.extrude_min_temp) {
           lcd_save_previous_screen();
           lcd_goto_screen(lcd_advanced_pause_toocold_menu);
+          SERIAL_ECHOPGM("lcd_enqueue_filament_change");
           return;
         }
       #endif
@@ -1427,6 +1493,7 @@ void lcd_restore_progress_menu_function() { lcd_goto_screen(lcd_restore_progress
       UNUSED(fan);
     #endif
     lcd_return_to_status();
+    SERIAL_ECHOPGM("lcd_preheat");
   }
 
   #if TEMP_SENSOR_0 != 0
@@ -1630,6 +1697,7 @@ void lcd_restore_progress_menu_function() { lcd_goto_screen(lcd_restore_progress
     #endif
     thermalManager.disable_all_heaters();
     lcd_return_to_status();
+    SERIAL_ECHOPGM("lcd_cooldown");
   }
 
   #if ENABLED(SDSUPPORT) && ENABLED(MENU_ADDAUTOSTART)
@@ -1757,6 +1825,7 @@ void lcd_restore_progress_menu_function() { lcd_goto_screen(lcd_restore_progress
             lcd_wait_for_move = true;
             enqueue_and_echo_commands_P(PSTR("G29 V1"));
             lcd_goto_screen(_lcd_level_bed_done);
+            SERIAL_ECHOPGM("_lcd_level_bed_get_z");
 
           #elif ENABLED(MESH_BED_LEVELING)
 
@@ -1809,7 +1878,7 @@ void lcd_restore_progress_menu_function() { lcd_goto_screen(lcd_restore_progress
       }
       lcdDrawUpdate = LCDVIEW_CALL_NO_REDRAW;
       #if ENABLED(PROBE_MANUALLY)
-        if (!lcd_wait_for_move) lcd_goto_screen(_lcd_level_bed_get_z);
+        if (!lcd_wait_for_move) {lcd_goto_screen(_lcd_level_bed_get_z);SERIAL_ECHOPGM("_lcd_level_bed_moving");}
       #endif
     }
 
@@ -1820,7 +1889,7 @@ void lcd_restore_progress_menu_function() { lcd_goto_screen(lcd_restore_progress
 
       // Set the menu to display ahead of blocking call
       lcd_goto_screen(_lcd_level_bed_moving);
-
+      SERIAL_ECHOPGM("_lcd_level_goto_next_point");
       #if ENABLED(MESH_BED_LEVELING)
 
         int8_t px, py;
@@ -1834,6 +1903,7 @@ void lcd_restore_progress_menu_function() { lcd_goto_screen(lcd_restore_progress
 
         // After the blocking function returns, change menus
         lcd_goto_screen(_lcd_level_bed_get_z);
+        SERIAL_ECHOPGM("_lcd_level_goto_next_point--1");
 
       #elif ENABLED(PROBE_MANUALLY)
 
@@ -1864,6 +1934,7 @@ void lcd_restore_progress_menu_function() { lcd_goto_screen(lcd_restore_progress
       lcdDrawUpdate = LCDVIEW_CALL_NO_REDRAW;
       if (axis_homed[X_AXIS] && axis_homed[Y_AXIS] && axis_homed[Z_AXIS])
         lcd_goto_screen(_lcd_level_bed_homing_done);
+      SERIAL_ECHOPGM("_lcd_level_bed_homing");
     }
 
     #if ENABLED(PROBE_MANUALLY)
@@ -1877,6 +1948,7 @@ void lcd_restore_progress_menu_function() { lcd_goto_screen(lcd_restore_progress
       defer_return_to_status = true;
       axis_homed[X_AXIS] = axis_homed[Y_AXIS] = axis_homed[Z_AXIS] = false;
       lcd_goto_screen(_lcd_level_bed_homing);
+      SERIAL_ECHOPGM("_lcd_level_bed_continue");
       enqueue_and_echo_commands_P(PSTR("G28"));
     }
 
@@ -2265,6 +2337,7 @@ void lcd_restore_progress_menu_function() { lcd_goto_screen(lcd_restore_progress
           lcd_set_ubl_map_plot_chars();
         #endif
         lcd_goto_screen(_lcd_ubl_output_map_lcd);
+        SERIAL_ECHOPGM("_lcd_ubl_map_homing");
       }
     }
 
@@ -2356,6 +2429,7 @@ void lcd_restore_progress_menu_function() { lcd_goto_screen(lcd_restore_progress
       if (!(axis_known_position[X_AXIS] && axis_known_position[Y_AXIS] && axis_known_position[Z_AXIS]))
         enqueue_and_echo_commands_P(PSTR("G28"));
       lcd_goto_screen(_lcd_ubl_map_homing);
+      SERIAL_ECHOPGM("_lcd_ubl_output_map_lcd_cmd");
     }
 
     /**
@@ -2474,6 +2548,7 @@ void lcd_restore_progress_menu_function() { lcd_goto_screen(lcd_restore_progress
 
       enqueue_and_echo_commands_P(PSTR("G28"));
       lcd_goto_screen(_lcd_calibrate_homing);
+      SERIAL_ECHOPGM("_lcd_delta_calibrate_home");
     }
 
     void _man_probe_pt(const float &lx, const float &ly) {
@@ -2492,6 +2567,7 @@ void lcd_restore_progress_menu_function() { lcd_goto_screen(lcd_restore_progress
       lcd_synchronize();
       move_menu_scale = 0.1;
       lcd_goto_screen(lcd_move_z);
+      SERIAL_ECHOPGM("_man_probe_pt");
     }
 
     float lcd_probe_pt(const float &lx, const float &ly) {
@@ -2670,9 +2746,9 @@ void lcd_restore_progress_menu_function() { lcd_goto_screen(lcd_restore_progress
 
   screenFunc_t _manual_move_func_ptr;
 
-  void lcd_move_menu_10mm() { move_menu_scale = 10.0; lcd_goto_screen(_manual_move_func_ptr); }
-  void lcd_move_menu_1mm()  { move_menu_scale =  1.0; lcd_goto_screen(_manual_move_func_ptr); }
-  void lcd_move_menu_01mm() { move_menu_scale =  0.1; lcd_goto_screen(_manual_move_func_ptr); }
+  void lcd_move_menu_10mm() { move_menu_scale = 10.0; lcd_goto_screen(_manual_move_func_ptr); SERIAL_ECHOPGM("1");}
+  void lcd_move_menu_1mm()  { move_menu_scale =  1.0; lcd_goto_screen(_manual_move_func_ptr); SERIAL_ECHOPGM("2");}
+  void lcd_move_menu_01mm() { move_menu_scale =  0.1; lcd_goto_screen(_manual_move_func_ptr); SERIAL_ECHOPGM("3");}
 
   void _lcd_move_distance_menu(AxisEnum axis, screenFunc_t func) {
     _manual_move_func_ptr = func;
@@ -2898,6 +2974,7 @@ void lcd_restore_progress_menu_function() { lcd_goto_screen(lcd_restore_progress
 
    void setZOffsetMove(){
       lcd_goto_screen(setZOffsetMessage);
+      SERIAL_ECHOPGM("setZOffsetMove");
       enqueue_and_echo_commands_P(PSTR("G1 Z20"));
       enqueue_and_echo_commands_P(PSTR("G1 X100 Y100 Z2"));
    }
@@ -2917,6 +2994,7 @@ void lcd_restore_progress_menu_function() { lcd_goto_screen(lcd_restore_progress
 
    void bedLevelingThirdPosition(){
       lcd_goto_screen(bedLevelingThirdPositionMessage);
+      SERIAL_ECHOPGM("bedLevelingThirdPosition");
       enqueue_and_echo_commands_P(PSTR("G1 Z20"));
       enqueue_and_echo_commands_P(PSTR("G1 X110 Y197"));
       enqueue_and_echo_commands_P(PSTR("G1 X110 Y197 Z0.05"));
@@ -2937,6 +3015,7 @@ void lcd_restore_progress_menu_function() { lcd_goto_screen(lcd_restore_progress
 
    void bedLevelingSecondPosition(){
       lcd_goto_screen(bedLevelingSecondPositionMessage);
+      SERIAL_ECHOPGM("bedLevelingSecondPosition");
       enqueue_and_echo_commands_P(PSTR("G1 Z20"));
       enqueue_and_echo_commands_P(PSTR("G1 X35.6 Y21"));
       enqueue_and_echo_commands_P(PSTR("G1 X35.6 Y21 Z0.05"));
@@ -2956,6 +3035,7 @@ void lcd_restore_progress_menu_function() { lcd_goto_screen(lcd_restore_progress
 
    void bedLevelingFirstPosition(){
       lcd_goto_screen(bedLevelingFirstPositionMessage);
+      SERIAL_ECHOPGM("bedLevelingFirstPosition");
       enqueue_and_echo_commands_P(PSTR("G1 X181 Y21"));
       enqueue_and_echo_commands_P(PSTR("G1 X181 Y21 Z0"));
    }
@@ -2977,6 +3057,7 @@ void lcd_restore_progress_menu_function() { lcd_goto_screen(lcd_restore_progress
      */
     void bedLevelUnlockPosition(){
       lcd_goto_screen(bedLevelingUnlockMessage);
+      SERIAL_ECHOPGM("bedLevelUnlockPosition");
       enqueue_and_echo_commands_P(PSTR("G1 X100 Y100 Z50"));
 
     }
@@ -3000,6 +3081,7 @@ void lcd_restore_progress_menu_function() { lcd_goto_screen(lcd_restore_progress
       lcdDrawUpdate = LCDVIEW_CALL_NO_REDRAW;
       if (axis_homed[X_AXIS] && axis_homed[Y_AXIS] && axis_homed[Z_AXIS])
       lcd_goto_screen(bedLevelingHomingDone);
+      SERIAL_ECHOPGM("bedLevelingHome");
     }
 
       /**
@@ -3014,6 +3096,7 @@ void lcd_restore_progress_menu_function() { lcd_goto_screen(lcd_restore_progress
       home_offset[Z_AXIS] = 0;
       axis_homed[X_AXIS] = axis_homed[Y_AXIS] = axis_homed[Z_AXIS] = false;
       lcd_goto_screen(bedLevelingHome);
+      SERIAL_ECHOPGM("bedLevelingScreen1");
       enqueue_and_echo_commands_P(PSTR("G28"));
 
    }
@@ -3679,6 +3762,7 @@ void lcd_restore_progress_menu_function() { lcd_goto_screen(lcd_restore_progress
     #if !PIN_EXISTS(SD_DETECT)
       void lcd_sd_refresh() {
         card.initsd();
+        SERIAL_ECHOPGM("lcd_sd_refresh");
         encoderTopLine = 0;
       }
     #endif
@@ -4124,42 +4208,53 @@ void lcd_restore_progress_menu_function() { lcd_goto_screen(lcd_restore_progress
         case ADVANCED_PAUSE_MESSAGE_INIT:
           defer_return_to_status = true;
           lcd_goto_screen(lcd_advanced_pause_init_message);
+          SERIAL_ECHOPGM("lcd_advanced_pause_show_message");
           break;
         case ADVANCED_PAUSE_MESSAGE_UNLOAD:
           defer_return_to_status = true;
           lcd_goto_screen(lcd_advanced_pause_unload_message);
+          SERIAL_ECHOPGM("lcd_advanced_pause_show_message1");
           break;
         case ADVANCED_PAUSE_MESSAGE_INSERT:
           defer_return_to_status = true;
           lcd_goto_screen(lcd_advanced_pause_insert_message);
+          SERIAL_ECHOPGM("lcd_advanced_pause_show_message2");
           break;
         case ADVANCED_PAUSE_MESSAGE_LOAD:
           defer_return_to_status = true;
           lcd_goto_screen(lcd_advanced_pause_load_message);
+          SERIAL_ECHOPGM("lcd_advanced_pause_show_message3");
           break;
         case ADVANCED_PAUSE_MESSAGE_EXTRUDE:
           defer_return_to_status = true;
           lcd_goto_screen(lcd_advanced_pause_extrude_message);
+          SERIAL_ECHOPGM("lcd_advanced_pause_show_message4");
           break;
         case ADVANCED_PAUSE_MESSAGE_CLICK_TO_HEAT_NOZZLE:
           defer_return_to_status = true;
           lcd_goto_screen(lcd_advanced_pause_heat_nozzle);
+          SERIAL_ECHOPGM("lcd_advanced_pause_show_message5");
           break;
         case ADVANCED_PAUSE_MESSAGE_WAIT_FOR_NOZZLES_TO_HEAT:
           defer_return_to_status = true;
           lcd_goto_screen(lcd_advanced_pause_wait_for_nozzles_to_heat);
+          SERIAL_ECHOPGM("lcd_advanced_pause_show_message6");
           break;
         case ADVANCED_PAUSE_MESSAGE_OPTION:
           defer_return_to_status = true;
           advanced_pause_menu_response = ADVANCED_PAUSE_RESPONSE_WAIT_FOR;
           lcd_goto_screen(lcd_advanced_pause_option_menu);
+          SERIAL_ECHOPGM("lcd_advanced_pause_show_message7");
           break;
         case ADVANCED_PAUSE_MESSAGE_RESUME:
           defer_return_to_status = true;
           lcd_goto_screen(lcd_advanced_pause_resume_message);
+          SERIAL_ECHOPGM("lcd_advanced_pause_show_message8");
           break;
         case ADVANCED_PAUSE_MESSAGE_STATUS:
           lcd_return_to_status();
+          SERIAL_ECHOPGM("advance pausemessage statuS");
+          SERIAL_ECHOPGM("lcd_advanced_pause_show_message9");
           break;
       }
     }
@@ -4297,7 +4392,7 @@ void lcd_restore_progress_menu_function() { lcd_goto_screen(lcd_restore_progress
     void reprapworld_keypad_move_y_up()    { _reprapworld_keypad_move(Y_AXIS, -1); }
     void reprapworld_keypad_move_y_down()  { _reprapworld_keypad_move(Y_AXIS,  1); }
     void reprapworld_keypad_move_home()    { enqueue_and_echo_commands_P(PSTR("G28")); } // move all axes home and wait
-    void reprapworld_keypad_move_menu()    { lcd_goto_screen(lcd_move_menu); }
+    void reprapworld_keypad_move_menu()    { lcd_goto_screen(lcd_move_menu); SERIAL_ECHOPGM("reprapworld_keypad_move_menu");}
 
     inline void handle_reprapworld_keypad() {
 
@@ -4339,7 +4434,7 @@ void lcd_restore_progress_menu_function() { lcd_goto_screen(lcd_restore_progress
    *
    */
   void _menu_action_back() { lcd_goto_previous_menu(); }
-  void menu_action_submenu(screenFunc_t func) { lcd_save_previous_screen(); lcd_goto_screen(func); }
+  void menu_action_submenu(screenFunc_t func) { lcd_save_previous_screen(); lcd_goto_screen(func); SERIAL_ECHOPGM("menu_action_submenu");}
   void menu_action_gcode(const char* pgcode) { enqueue_and_echo_commands_P(pgcode); }
   void menu_action_function(screenFunc_t func) { (*func)(); }
 
@@ -4349,6 +4444,7 @@ void lcd_restore_progress_menu_function() { lcd_goto_screen(lcd_restore_progress
       UNUSED(longFilename);
       card.openAndPrintFile(filename);
       lcd_return_to_status();
+      SERIAL_ECHOPGM("menu_action");
     }
 
     void menu_action_sddirectory(const char* filename, char* longFilename) {
@@ -4533,6 +4629,7 @@ void lcd_update() {
 
       if (sd_status) {
         card.initsd();
+        SERIAL_ECHOPGM("sd_status");
         if (lcd_sd_status != 2) LCD_MESSAGEPGM(MSG_SD_INSERTED);
       }
       else {
@@ -4699,7 +4796,8 @@ void lcd_update() {
       if (currentScreen == lcd_status_screen || defer_return_to_status)
         return_to_status_ms = ms + LCD_TIMEOUT_TO_STATUS;
       else if (ELAPSED(ms, return_to_status_ms))
-        lcd_return_to_status();
+        {lcd_return_to_status();
+          SERIAL_ECHOPGM("ultipanel--1");}
 
     #endif // ULTIPANEL
 

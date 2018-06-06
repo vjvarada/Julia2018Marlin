@@ -249,6 +249,12 @@
 #include "endstops.h"
 #include "temperature.h"
 #include "cardreader.h"
+#include "SdBaseFile.h"
+
+#include "Sd2Card.h"
+#include "SdFatUtil.h"
+#include "SdFatConfig.h"
+#include "SdFatStructs.h"
 #include "configuration_store.h"
 #include "language.h"
 #include "pins_arduino.h"
@@ -257,7 +263,9 @@
 #include "duration_t.h"
 #include "types.h"
 #include "gcode.h"
-
+#include "SdFile.h"
+#include "SdInfo.h"
+ 
 #if HAS_ABL
   #include "vector_3.h"
   #if ENABLED(AUTO_BED_LEVELING_LINEAR)
@@ -319,6 +327,7 @@
 
 #if ENABLED(SDSUPPORT)
   CardReader card;
+  SdBaseFile sdf;
 #endif
 
 #if ENABLED(EXPERIMENTAL_I2CBUS)
@@ -588,11 +597,10 @@ static uint8_t target_extruder;
 #if HAS_POWER_SWITCH
   bool powersupply_on =
     #if ENABLED(PS_DEFAULT_OFF)
-      false
+      false;
     #else
-      true
+      true;
     #endif
-  ;
 #endif
 
 #if ENABLED(DELTA)
@@ -891,6 +899,17 @@ bool enqueue_and_echo_command(const char* cmd, bool say_ok/*=false*/) {
   }
   return false;
 }
+void enqueue_and_echo_command_a(const char* cmd, bool say_ok/*=false*/) {
+  if (_enqueuecommand(cmd, say_ok)) {
+    SERIAL_ECHO_START();
+    SERIAL_ECHOPAIR(MSG_ENQUEUEING, cmd);
+    SERIAL_CHAR('"');
+    SERIAL_EOL();
+    
+  }
+  //return false;
+}
+
 
 void setup_killpin() {
   #if HAS_KILL
@@ -3931,6 +3950,7 @@ inline void gcode_G28(const bool always_home_all) {
   #endif
 
   lcd_refresh();
+  SERIAL_PROTOCOLPGM("lcd refresh");
 
   report_current_position();
 
@@ -6265,6 +6285,7 @@ inline void gcode_M17() {
   /**
    * M24: Start or Resume SD Print
    */
+ 
   inline void gcode_M24() {
     #if ENABLED(PARK_HEAD_ON_PAUSE)
       resume_print();
@@ -10566,7 +10587,9 @@ void process_next_command() {
         case 5:
           gcode_M5();     // M5 - turn spindle/laser off
           break;          // synchronizes with movement commands
-      #endif
+      
+     
+      #endif  
       case 17: // M17: Enable all stepper motors
         gcode_M17();
         break;
@@ -12892,6 +12915,7 @@ void stop() {
 }
 
 #if ENABLED(POWERPANIC)
+
   volatile bool powerPanicActive = false;
 
   void pciSetup(byte pin) //Initialising pin change interrupt
@@ -12983,12 +13007,15 @@ ISR(PCINT2_vect) {
           *c = tolower(*c);
       card.write_command(cmd);
 
+    
+
       sprintf_P(cmd, PSTR("M26 S%lu"), pos-16); // //TODO: check if it works, and goes back to the position where it stoped without missing lines
       card.write_command(cmd);
 
       sprintf_P(cmd, PSTR("M24"));
 
       card.write_command(cmd);
+
       //TODO: gcode to delete itself
       card.closefile(); //sets saving = false and closes the file.
       card.stopSDPrint();
@@ -13022,7 +13049,7 @@ ISR(PCINT2_vect) {
  *    • status LEDs
  */
 void setup() {
-
+ 
 
   #ifdef DISABLE_JTAG
     // Disable JTAG on AT90USB chips to free up pins for IO
@@ -13222,20 +13249,21 @@ void setup() {
 
   #if ENABLED(SWITCHING_EXTRUDER)
     move_extruder_servo(0);  // Initialize extruder servo
+    SERIAL_ECHO_START();
+    
   #endif
 
   #if ENABLED(SWITCHING_NOZZLE)
     move_nozzle_servo(0);  // Initialize nozzle servo
   #endif
 
-  #if ENABLED(POWERPANIC)
+  #if ENABLED(POWERPANIC)  //power panic
+    
       setup_PowerPanic();
-      // if (SdFile.open("", "RESR.GCO", O_READ))
-      // //File Exists, Show Print Resurection Menu
-      //   lcd_restore_progress_menu_function();
+      SERIAL_ECHO_START();
+      SERIAL_ECHOPGM("powerPanicActive");
+      
   #endif
-
-
 }
 
 /**

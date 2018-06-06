@@ -50,6 +50,7 @@ public:
   void closefile(bool store_location=false);
   void release();
   void openAndPrintFile(const char *name);
+  bool checkFileExists(char* name, bool read, bool push_current=false);
   void startFileprint();
   void stopSDPrint();
   void getStatus();

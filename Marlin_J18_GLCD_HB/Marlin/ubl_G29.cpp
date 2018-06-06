@@ -42,6 +42,7 @@
 
   #if ENABLED(NEWPANEL)
     void lcd_return_to_status();
+    SERIAL_ECHOPGM("newpanel");
     void lcd_mesh_edit_setup(float initial);
     float lcd_mesh_edit();
     void lcd_z_offset_edit_setup(float);
@@ -961,6 +962,7 @@
       SERIAL_PROTOCOLPGM("Place shim under nozzle");
       LCD_MESSAGEPGM(MSG_UBL_BC_INSERT);
       lcd_return_to_status();
+      SERIAL_ECHOPGM("echo_and_take_a_measurement");
       echo_and_take_a_measurement();
 
       const float z1 = measure_point_with_encoder();
@@ -1001,7 +1003,7 @@
       do_blocking_move_to_xy(lx, ly);
 
       lcd_return_to_status();
-
+      SERIAL_ECHOPGM("manually_probe");
       mesh_index_pair location;
       do {
         location = find_closest_mesh_point_of_type(INVALID, lx, ly, USE_NOZZLE_AS_REFERENCE, NULL, false);
@@ -1508,7 +1510,7 @@
         if (do_ubl_mesh_map) display_map(g29_map_type);  // show the user which point is being adjusted
 
         lcd_refresh();
-
+        SERIAL_ECHOPGM("unified bed leveling");
         lcd_mesh_edit_setup(new_z);
 
         do {
@@ -1519,7 +1521,8 @@
           idle();
         } while (!ubl_lcd_clicked());
 
-        if (!ubl_lcd_map_control) lcd_return_to_status();
+        if (!ubl_lcd_map_control) {SERIAL_ECHOPGM("unified bed leveling1");
+          lcd_return_to_status();}
 
         // The technique used here generates a race condition for the encoder click.
         // It could get detected in lcd_mesh_edit (actually _lcd_mesh_fine_tune) or here.
@@ -1535,6 +1538,7 @@
           if (ELAPSED(millis(), nxt)) {
             ubl_lcd_map_control = false;
             lcd_return_to_status();
+            SERIAL_ECHOPGM("unified bed leveling2");
             do_blocking_move_to_z(Z_CLEARANCE_BETWEEN_PROBES);
             LCD_MESSAGEPGM(MSG_EDITING_STOPPED);
 
@@ -1549,7 +1553,7 @@
         z_values[location.x_index][location.y_index] = new_z;
 
         lcd_refresh();
-
+        SERIAL_ECHOPGM("unified bed leveling 2");
       } while (location.x_index >= 0 && --g29_repetition_cnt > 0);
 
       FINE_TUNE_EXIT:
@@ -1569,7 +1573,8 @@
       if (ubl_lcd_map_control)
         lcd_goto_screen(_lcd_ubl_output_map_lcd);
       else
-        lcd_return_to_status();
+        {lcd_return_to_status();
+          SERIAL_ECHOPGM("unified bed leveling3");}
     }
 
   #endif // NEWPANEL
