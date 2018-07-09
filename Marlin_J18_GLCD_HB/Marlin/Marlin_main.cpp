@@ -12934,6 +12934,9 @@ void stop() {
 ISR(PCINT2_vect) {
   if (digitalRead(63) == LOW && !powerPanicActive)
   {
+	char * const current_command = command_queue[cmd_queue_index_r];
+	SERIAL_PROTOCOL(current_command);
+	
     if (card.sdprinting)
     {
       powerPanicActive = true;
@@ -12956,6 +12959,9 @@ ISR(PCINT2_vect) {
       char cmd[30];
       char* c;
       uint32_t pos = card.get_sdpos(); //gets sd pos, the current position in SD card
+	  
+	  SERIAL_PROTOCOL(pos);
+	  
       card.closefile(); //also sets saving = false
 
       card.openFile("RESR.GCO",false);  //open a file to write, also sets saving = true
