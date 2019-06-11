@@ -227,6 +227,7 @@ void CardReader::ls() {
 
 void CardReader::initsd() {
   cardOK = false;
+  
   if (root.isOpen()) root.close();
 
   #ifndef SPI_SPEED
@@ -251,6 +252,7 @@ void CardReader::initsd() {
     SERIAL_ERRORLNPGM(MSG_SD_OPENROOT_FAIL);
   }
   else {
+    
     cardOK = true;
     SERIAL_ECHO_START();
     SERIAL_ECHOLNPGM(MSG_SD_CARD_OK);
@@ -438,6 +440,111 @@ void CardReader::openFile(char* name, bool read, bool push_current/*=false*/) {
   }
 }
 
+bool CardReader::checkFileExists(char* name, bool read, bool push_current/*=false*/) {
+  
+  if (!cardOK) return;
+
+  uint8_t doing = 0;
+  if (isFileOpen()) { //replacing current file by new file, or subfile call
+    if (push_current) {
+      if (file_subcall_ctr > SD_PROCEDURE_DEPTH - 1) {
+        SERIAL_ERROR_START();
+        SERIAL_ERRORPGM("trying to call sub-gcode files with too many levels. MAX level is:");
+        SERIAL_ERRORLN(SD_PROCEDURE_DEPTH);
+        kill(PSTR(MSG_KILLED));
+        return;
+      }
+
+      // Store current filename and position
+      getAbsFilename(proc_filenames[file_subcall_ctr]);
+
+      SERIAL_ECHO_START();
+      SERIAL_ECHOPAIR("SUBROUTINE CALL target:\"", name);
+      SERIAL_ECHOPAIR("\" parent:\"", proc_filenames[file_subcall_ctr]);
+      SERIAL_ECHOLNPAIR("\" pos", sdpos);
+      filespos[file_subcall_ctr] = sdpos;
+      file_subcall_ctr++;
+    }
+    else {
+      doing = 1;
+    }
+  }
+  else { // Opening fresh file
+    doing = 2;
+    file_subcall_ctr = 0; // Reset procedure depth in case user cancels print while in procedure
+  }
+
+  if (doing) {
+    SERIAL_ECHO_START();
+    SERIAL_ECHOPGM("Now ");
+    SERIAL_ECHO(doing == 1 ? "doing" : "fresh");
+    SERIAL_ECHOLNPAIR(" file: ", name);
+    SERIAL_ECHOLNPGM("doing is true");
+  }
+
+  stopSDPrint();
+  
+  SdFile myDir;
+  curDir = &root;
+  char *fname = name;
+  char *dirname_start, *dirname_end;
+
+  if (name[0] == '/') {
+    dirname_start = &name[1];
+    while (dirname_start != NULL) {
+      dirname_end = strchr(dirname_start, '/');
+      //SERIAL_ECHOPGM("start:");SERIAL_ECHOLN((int)(dirname_start - name));
+      //SERIAL_ECHOPGM("end  :");SERIAL_ECHOLN((int)(dirname_end - name));
+      if (dirname_end != NULL && dirname_end > dirname_start) {
+        char subdirname[FILENAME_LENGTH];
+        strncpy(subdirname, dirname_start, dirname_end - dirname_start);
+        subdirname[dirname_end - dirname_start] = 0;
+        SERIAL_ECHOLN(subdirname);
+        if (!myDir.open(curDir, subdirname, O_READ)) {
+          SERIAL_PROTOCOLPGM(MSG_SD_OPEN_FILE_FAIL);
+          SERIAL_PROTOCOL(subdirname);
+          SERIAL_PROTOCOLCHAR('.');
+          return;
+        }
+        else {
+          //SERIAL_ECHOLNPGM("dive ok");
+        }
+
+        curDir = &myDir;
+        SERIAL_ECHOLNPGM("myDir");
+        dirname_start = dirname_end + 1;
+      }
+      else { // the remainder after all /fsa/fdsa/ is the filename
+        fname = dirname_start;
+        //SERIAL_ECHOLNPGM("remainder");
+        //SERIAL_ECHOLN(fname);
+        break;
+      }
+    }
+  }
+  else { //relative path
+    curDir = &workDir;
+    SERIAL_ECHOLNPGM("workDir");
+    SERIAL_ECHOLNPGM("Relative Path Supplied");
+  }
+
+  if (read) {
+    SERIAL_ECHOLNPGM("Read is True");
+    if (file.open(curDir, fname, O_READ)) {
+        SERIAL_ECHOLNPGM("file.open() returned True");
+        return true;
+      
+    }
+    else {
+      SERIAL_ECHOLNPGM("file.open() returned False");
+      return false;
+      }
+      
+    
+  }
+}
+
+
 void CardReader::removeFile(char* name) {
   if (!cardOK) return;
 
@@ -511,6 +618,13 @@ void CardReader::getStatus() {
   }
 }
 
+//--------Created function for Julia 2018 Power Panic
+
+uint32_t CardReader::get_sdpos()
+{
+return sdpos;
+}
+//-----------------------------------
 void CardReader::write_command(char *buf) {
   char* begin = buf;
   char* npos = 0;
@@ -536,12 +650,21 @@ void CardReader::checkautostart(bool force) {
     return;
 
   autostart_stilltocheck = false;
-
+  SERIAL_ECHOPGM("checkautostart");
   if (!cardOK) {
     initsd();
     if (!cardOK) return; // fail
   }
-
+  
+  if(checkFileExists("RESR.GCO",true)){   //File Exists, Show Print Resurection MenuRESR.GCO
+                                          
+      SERIAL_ECHOPGM("File Exists!!!");   //power panic
+      lcd_restore_progress_menu_function();
+         
+       }
+  else
+      SERIAL_ECHOPGM("File NOT FOUND!!!");
+    
   char autoname[10];
   sprintf_P(autoname, PSTR("auto%i.g"), autostart_index);
   for (int8_t i = 0; i < (int8_t)strlen(autoname); i++) autoname[i] = tolower(autoname[i]);

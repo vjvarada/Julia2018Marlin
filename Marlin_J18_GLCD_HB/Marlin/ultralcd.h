@@ -36,6 +36,7 @@
   int16_t lcd_strlen_P(const char* s);
   void lcd_update();
   void lcd_init();
+  void lcd_restore_progress_menu_function();
   bool lcd_hasstatus();
   void lcd_setstatus(const char* message, const bool persist=false);
   void lcd_setstatusPGM(const char* message, const int8_t level=0);

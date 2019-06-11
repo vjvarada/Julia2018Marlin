@@ -50,9 +50,11 @@ public:
   void closefile(bool store_location=false);
   void release();
   void openAndPrintFile(const char *name);
+  bool checkFileExists(char* name, bool read, bool push_current=false);
   void startFileprint();
   void stopSDPrint();
   void getStatus();
+  uint32_t get_sdpos();   //Functoin created for Julia 2018 Power Panic
   void printingHasFinished();
 
   #if ENABLED(LONG_FILENAME_HOST_SUPPORT)

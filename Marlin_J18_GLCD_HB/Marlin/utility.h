@@ -41,13 +41,31 @@ void safe_delay(millis_t ms);
   char* itostr3left(const int xx);
 
   // Convert signed int to rj string with _123, -123, _-12, or __-1 format
-  char *itostr4sign(const int x);
+  char* itostr4sign(const int x);
+
+//--------Julia 2018 Power Panic Utilities------------------
+
+// Convert float to string with 123.4 format, dropping sign
+  char* ftostr31(const float &x);
+
+  // Convert float to string with 123.4 format
+  char* ftostr31ns(const float &x);
+
+  // Convert float to string with 12345.678 format
+  char* ftostr53(const float &x);
+
+  // Convert float to string with 123.456 format
+  char* ftostr33(const float &x);
+
+//-------------------------------------------------------------
+
+
 
   // Convert unsigned float to string with 1.23 format
   char* ftostr12ns(const float &x);
 
   // Convert signed float to fixed-length string with 023.45 / -23.45 format
-  char *ftostr32(const float &x);
+  char* ftostr32(const float &x);
 
   // Convert float to fixed-length string with +123.4 / -123.4 format
   char* ftostr41sign(const float &x);
